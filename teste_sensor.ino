@@ -1,25 +1,3 @@
-/*
-  =====================================================================
-  TESTE DO SENSOR ULTRASSÔNICO HC-SR04 — ESP32 DevKit V1
-  Arquivo: 03_teste_sensor.ino
-  =====================================================================
-  Ligações (detalhes na Parte 6 do guia):
-    HC-SR04 VCC  -> 5 V (pino VIN do ESP32)
-    HC-SR04 GND  -> GND
-    HC-SR04 TRIG -> GPIO 18
-    HC-SR04 ECHO -> resistor de 1 kΩ -> GPIO 19
-                    e, no mesmo ponto do GPIO 19: resistor de 2 kΩ -> GND
-                    (divisor de tensão: baixa o sinal de 5 V para 3,3 V)
-
-    Sem resistores? Alimente o sensor com 3,3 V (VCC -> pino 3V3) e ligue o ECHO
-    direto no GPIO 19: com 3,3 V de alimentação, o ECHO nunca passa de 3,3 V.
-
-  Como usar: abra o Monitor Serial em 115200 e aproxime a mão do sensor.
-  A distância mostrada deve acompanhar a mão: 10 cm, 20 cm, 50 cm...
-  "sem eco" o tempo todo = fio solto, divisor errado ou sensor sem 5 V.
-  =====================================================================
-*/
-
 #include <Arduino.h>
 
 const int PIN_TRIG = 18;
