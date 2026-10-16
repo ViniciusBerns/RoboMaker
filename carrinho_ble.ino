@@ -1,36 +1,3 @@
-/*
-  =====================================================================
-  CARRINHO ROBÔ — ESP32 DevKit V1 + L298N + Bluetooth LE + HC-SR04 (opcional)
-  Arquivo: 02_carrinho_ble.ino
-  =====================================================================
-  Controle pelo iPhone com o app gratuito "Bluefruit Connect" (Adafruit):
-  abra o app > escolha "Carrinho-01" > Controller > Control Pad.
-
-  Botões do Control Pad
-    Setas ..... mover. Segure para andar, solte para parar.
-                Duas setas juntas = curva (por exemplo, frente + direita).
-    Botão 1 ... PARAR tudo (e sair do modo automático)
-    Botão 2 ... mais lento
-    Botão 3 ... mais rápido
-    Botão 4 ... liga/desliga o modo automático (só funciona com o sensor instalado)
-
-  Também aceita texto simples, para testar com o app nRF Connect:
-    F = frente   B = ré   L = esquerda   R = direita   S = parar
-    + = mais rápido   - = mais lento   A = modo automático
-
-  Ligações usadas (GPIO do ESP32 -> pino do L298N)
-    GPIO 25 -> ENA (sem o jumper)    GPIO 26 -> IN1    GPIO 27 -> IN2
-    GPIO 14 -> IN3                   GPIO 13 -> IN4    GPIO 33 -> ENB (sem o jumper)
-    Motor A = OUT1/OUT2 (lado ESQUERDO no código)   Motor B = OUT3/OUT4 (lado DIREITO)
-    Bateria + -> 12V do L298N  |  5V do L298N -> VIN do ESP32  |  GND do L298N -> GND do ESP32
-
-  Seções deste arquivo
-    1) Configurações        2) Pinos               3) Estado do carrinho
-    4) Motores              5) Sensor              6) Modo automático (futuro TinyML)
-    7) Comandos recebidos   8) Bluetooth           9) setup() e loop()
-  =====================================================================
-*/
-
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
