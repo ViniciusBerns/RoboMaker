@@ -13,64 +13,57 @@
   #define NUCLEO_ESP32_3 0   // núcleo ESP32 versão 2.x (API de PWM antiga)
 #endif
 
-// =====================================================================
-// 1) CONFIGURAÇÕES  (pode mudar à vontade)
-// =====================================================================
-const char* NOME_BLE = "Carrinho-01";   // nome que aparece no app; use um nome diferente em cada carrinho
 
-// >>> Troque para true SÓ DEPOIS de instalar o sensor HC-SR04 (Parte 6 do guia).
+const char* NOME_BLE = "Carrinho-01";  
+
+
 const bool USAR_SENSOR_ULTRASSONICO = false;
-const int  DIST_PARADA_CM = 20;   // algo mais perto que isto bloqueia o avanço
-const int  DIST_LIBERA_CM = 25;   // o avanço só é liberado quando a distância passa disto
+const int  DIST_PARADA_CM = 20;   
+const int  DIST_LIBERA_CM = 25;   
 
-const int   VEL_INICIAL = 190;    // velocidade ao ligar (0 a 255)
-const int   VEL_MIN     = 110;    // abaixo disto os motores só "zumbem", então vira 0
+const int   VEL_INICIAL = 190;    
+const int   VEL_MIN     = 110;    
 const int   VEL_MAX     = 255;
-const int   VEL_PASSO   = 20;     // quanto os botões 2 e 3 mudam a velocidade
-const float FATOR_CURVA = 0.40;   // em curva, a roda de dentro anda 40% da velocidade da de fora (nunca menos que VEL_MIN)
-const int   VEL_AUTO    = 150;    // velocidade do modo automático
-const int   RAMPA_PASSO = 40;     // aceleração suave: quanto o PWM sobe a cada 20 ms (255 = sem rampa)
+const int   VEL_PASSO   = 20;     
+const float FATOR_CURVA = 0.40;   
+const int   VEL_AUTO    = 150;    
+const int   RAMPA_PASSO = 40;     
 
-// =====================================================================
-// 2) PINOS  (conforme a sua montagem: GPIO do ESP32 -> pino do L298N)
-// =====================================================================
+
+
+
 const int PIN_ENA = 25;   // L298N ENA — velocidade do motor ESQUERDO (PWM) (sem o jumper)
 const int PIN_IN1 = 26;   // L298N IN1 — direção do motor esquerdo
 const int PIN_IN2 = 27;   // L298N IN2 — direção do motor esquerdo
-const int PIN_IN3 = 14;   // L298N IN3 — direção do motor direito (GPIO 14 dá um pulso curto ao ligar: um tranquinho nas rodas é normal)
+const int PIN_IN3 = 14;   // L298N IN3 — direção do motor direito 
 const int PIN_IN4 = 13;   // L298N IN4 — direção do motor direito
-const int PIN_ENB = 33;   // L298N ENB — velocidade do motor DIREITO (PWM) (sem o jumper)
+const int PIN_ENB = 33;   // L298N ENB — velocidade do motor DIREITO 
 
 const int PIN_TRIG = 18;  // HC-SR04 TRIG
-const int PIN_ECHO = 19;  // HC-SR04 ECHO (com divisor de tensão, ou sensor alimentado com 3,3 V)
+const int PIN_ECHO = 19;  // HC-SR04 ECHO 
 
-const int PIN_LED = 2;    // LED azul da própria placa
+const int PIN_LED = 2;   
 
 const int PWM_FREQ = 5000;   // 5 kHz
 const int PWM_BITS = 8;      // valores de 0 a 255
 
-// =====================================================================
-// 3) ESTADO DO CARRINHO
-// =====================================================================
-// Os botões chegam pelo Bluetooth, que roda em outra "tarefa" do processador.
-// Por isso as variáveis compartilhadas com ele são "volatile".
 volatile bool btnFrente  = false;
 volatile bool btnTras    = false;
 volatile bool btnEsq     = false;
 volatile bool btnDir     = false;
 volatile bool modoAuto   = false;
 volatile int  velocidade = VEL_INICIAL;
-volatile bool statusMudou = true;   // true = há novidade para avisar ao celular
-volatile bool conectado   = false;  // true = celular conectado
+volatile bool statusMudou = true;  
+volatile bool conectado   = false;  
 
 bool  eraConectado = false;
-bool  obstaculo = false;            // true = algo à frente, mais perto que DIST_PARADA_CM
-float distanciaCm = -1;             // última leitura do sensor (-1 = sem eco ou sensor desligado)
+bool  obstaculo = false;            
+float distanciaCm = -1;             
 int   leiturasPerto = 0;
 int   leiturasLonge = 0;
 
-int atualE = 0;                     // PWM (com sinal) aplicado agora no motor esquerdo
-int atualD = 0;                     // PWM (com sinal) aplicado agora no motor direito
+int atualE = 0;                     
+int atualD = 0;                     
 
 unsigned long tSensor = 0;
 unsigned long tMotor  = 0;
@@ -79,9 +72,7 @@ unsigned long reiniciarAnuncioEm = 0;
 BLEServer*         servidor = nullptr;
 BLECharacteristic* caracTx  = nullptr;
 
-// =====================================================================
-// 4) MOTORES
-// =====================================================================
+
 void pwmIniciar(int pino, int canal) {
 #if NUCLEO_ESP32_3
   ledcAttach(pino, PWM_FREQ, PWM_BITS);
@@ -99,8 +90,7 @@ void pwmEscrever(int pino, int canal, int duty) {
 #endif
 }
 
-// lado: 0 = esquerdo, 1 = direito.
-// valor: -255 (ré a fundo) ... 0 (parado) ... +255 (frente a fundo)
+
 void motorEscrever(int lado, int valor) {
   const int a  = (lado == 0) ? PIN_IN1 : PIN_IN3;
   const int b  = (lado == 0) ? PIN_IN2 : PIN_IN4;
@@ -120,13 +110,12 @@ void pararMotoresAgora() {
   motorEscrever(1, 0);
 }
 
-// Valores entre 1 e VEL_MIN-1 não fazem o motor girar (só zumbem): viram 0.
+
 int zonaMorta(int v) {
   return (abs(v) < VEL_MIN) ? 0 : v;
 }
 
-// Aceleração suave: sobe aos poucos, mas PARAR é sempre imediato.
-// Isso evita o tranco que derruba a tensão e reinicia o ESP32.
+
 int suavizar(int atual, int alvo) {
   if (alvo == 0) return 0;                                    // parar é imediato
   if (atual != 0 && ((atual > 0) != (alvo > 0))) return 0;    // inverter o sentido passa por zero
@@ -137,10 +126,7 @@ int suavizar(int atual, int alvo) {
   return atual + dif;
 }
 
-// =====================================================================
-// 5) SENSOR ULTRASSÔNICO (HC-SR04)
-// =====================================================================
-// Devolve a distância em cm, ou -1 se nenhum eco voltou.
+
 float medirDistanciaCm() {
   digitalWrite(PIN_TRIG, LOW);
   delayMicroseconds(2);
@@ -152,9 +138,6 @@ float medirDistanciaCm() {
   return duracao * 0.0343f / 2.0f;                 // som: 0,0343 cm/µs; o eco vai e volta
 }
 
-// Lê o sensor e decide se há obstáculo. Exige 2 leituras seguidas para mudar de estado
-// (evita falsos alarmes) e usa dois limites diferentes (DIST_PARADA e DIST_LIBERA)
-// para o carrinho não ficar "tremendo" quando a distância está no limite.
 void atualizarSensor() {
   distanciaCm = medirDistanciaCm();
   const bool perto = (distanciaCm > 0 && distanciaCm <= DIST_PARADA_CM);
@@ -180,17 +163,12 @@ void atualizarSensor() {
   }
 }
 
-// =====================================================================
-// 6) MODO AUTOMÁTICO  (base para o TinyML do futuro)
-// =====================================================================
+
 enum Acao { ACAO_PARAR, ACAO_FRENTE, ACAO_RE, ACAO_ESQUERDA, ACAO_DIREITA };
 
-// >>> PONTO DE ENCAIXE DO TinyML <<<
-// Hoje é uma regra simples (sem IA): anda para frente e, se houver obstáculo, gira
-// para a direita até o caminho liberar. No futuro, o corpo desta função passa a
-// chamar o modelo de machine learning; todo o resto do programa continua igual.
+
 Acao decidirAcaoAutonoma(float distancia, bool temObstaculo) {
-  (void)distancia;   // a regra simples só usa "temObstaculo"; o modelo futuro usará a distância
+  (void)distancia;   
   if (temObstaculo) return ACAO_DIREITA;
   return ACAO_FRENTE;
 }
@@ -198,7 +176,7 @@ Acao decidirAcaoAutonoma(float distancia, bool temObstaculo) {
 void alvosDoModoAutomatico(int &alvoE, int &alvoD) {
   alvoE = 0;
   alvoD = 0;
-  if (!USAR_SENSOR_ULTRASSONICO) return;   // sem sensor, o modo automático não anda
+  if (!USAR_SENSOR_ULTRASSONICO) return;   
   switch (decidirAcaoAutonoma(distanciaCm, obstaculo)) {
     case ACAO_FRENTE:   alvoE =  VEL_AUTO; alvoD =  VEL_AUTO; break;
     case ACAO_RE:       alvoE = -VEL_AUTO; alvoD = -VEL_AUTO; break;
@@ -208,7 +186,7 @@ void alvosDoModoAutomatico(int &alvoE, int &alvoD) {
   }
 }
 
-// Transforma as setas apertadas (ou a decisão automática) em PWM para cada motor.
+
 void calcularAlvos(int &alvoE, int &alvoD) {
   if (modoAuto) {
     alvosDoModoAutomatico(alvoE, alvoD);
@@ -217,10 +195,10 @@ void calcularAlvos(int &alvoE, int &alvoD) {
     return;
   }
 
-  int acel = (btnFrente ? 1 : 0) - (btnTras ? 1 : 0);   // +1 frente, -1 ré
-  int giro = (btnDir ? 1 : 0) - (btnEsq ? 1 : 0);       // +1 direita, -1 esquerda
+  int acel = (btnFrente ? 1 : 0) - (btnTras ? 1 : 0);   
+  int giro = (btnDir ? 1 : 0) - (btnEsq ? 1 : 0);      
 
-  // PROTEÇÃO: com obstáculo à frente, só o AVANÇO é bloqueado. Ré e giro continuam liberados.
+
   if (obstaculo && acel > 0) acel = 0;
 
   const int v = velocidade;
@@ -254,9 +232,7 @@ void atualizarMotores() {
   motorEscrever(1, atualD);
 }
 
-// =====================================================================
-// 7) COMANDOS RECEBIDOS
-// =====================================================================
+
 void zerarBotoes() {
   btnFrente = false;
   btnTras   = false;
@@ -339,9 +315,7 @@ void tratarTexto(char c) {
   }
 }
 
-// Interpreta os bytes recebidos. O app Bluefruit manda pacotes de 5 bytes:
-//   '!'  'B'  <botão>  <1 = apertou, 0 = soltou>  <checksum>
-// O checksum é o inverso (bit a bit) da soma dos 4 bytes anteriores.
+
 void processarDados(const uint8_t* d, size_t n) {
   size_t i = 0;
   while (i < n) {
@@ -363,9 +337,7 @@ void processarDados(const uint8_t* d, size_t n) {
   }
 }
 
-// =====================================================================
-// 8) BLUETOOTH LE  (serviço "Nordic UART", que o app Bluefruit entende)
-// =====================================================================
+
 #define UUID_SERVICO "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
 #define UUID_RX      "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"   // celular -> ESP32
 #define UUID_TX      "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"   // ESP32 -> celular
