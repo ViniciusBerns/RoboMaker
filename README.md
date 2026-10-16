@@ -2,7 +2,7 @@
 
 Projeto da disciplina de robótica. Um carrinho de 2 rodas, controlado pelo iPhone por Bluetooth Low Energy, que para diante de obstáculos usando um sensor ultrassônico. Na segunda etapa (**CP2**) o projeto evolui para **TinyML**: os dados do sensor são coletados pelo grupo, um modelo é treinado no **Edge Impulse** e roda dentro do ESP32 para classificar a situação à frente do carrinho.
 
-**Integrantes:** Vinícius Bernardino · Gabriel Pacheco
+**Integrantes:** Vinícius Bernardino - RM 97888 · Gabriel Pacheco - RM 550191
 
 > **Convenção deste README.** Tudo que está escrito como fato (hardware, pinagem, código, formato dos dados) existe no projeto. Os pontos que dependem de medições ou de telas do Edge Impulse estão marcados com **`[PREENCHER]`**. Eles só devem ser preenchidos com o que o grupo coletar e obtiver de verdade, e os prints devem ser reais. Números, matrizes de confusão e acurácias **não são inventados** aqui.
 
