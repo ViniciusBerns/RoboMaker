@@ -1,10 +1,10 @@
 # RoboMaker — Carrinho robótico com ESP32, controle BLE e TinyML (Edge Impulse)
 
-Projeto da disciplina de robótica. Um carrinho de 2 rodas, controlado pelo iPhone por Bluetooth Low Energy, que para diante de obstáculos usando um sensor ultrassônico. Na segunda etapa (**CP2**) o projeto evolui para **TinyML**: os dados do sensor são coletados pelo grupo, um modelo é treinado no **Edge Impulse** e roda dentro do ESP32 para classificar a situação à frente do carrinho.
+Projeto da disciplina de robótica. Um carrinho de 2 rodas, controlado pelo iPhone por Bluetooth Low Energy, que para diante de obstáculos usando um sensor ultrassônico. Na segunda etapa (**CP2**) o projeto evolui para **TinyML**: os dados do sensor foram coletados pelo grupo, um modelo foi treinado no **Edge Impulse** e roda dentro do ESP32 para classificar a situação à frente do carrinho.
 
 **Integrantes:** Vinícius Bernardino - RM 97888 · Gabriel Pacheco - RM 550191
 
-> **Convenção deste README.** Tudo que está escrito como fato (hardware, pinagem, código, formato dos dados) existe no projeto. Os pontos que dependem de medições ou de telas do Edge Impulse estão marcados com **`[PREENCHER]`**. Eles só devem ser preenchidos com o que o grupo coletar e obtiver de verdade, e os prints devem ser reais. Números, matrizes de confusão e acurácias **não são inventados** aqui.
+> **Convenção deste README.** Os números do dataset (seção 6) foram calculados a partir dos CSVs do projeto. Os resultados do Edge Impulse (acurácia, matriz de confusão, prints) vêm do Studio e estão marcados com **`[PREENCHER]`** até serem copiados de lá. O que não foi verificado está dito como tal, em especial na seção 10.
 
 ---
 
@@ -53,26 +53,31 @@ O motivo da troca Arduino Uno → ESP32: o Uno tem apenas 2 KB de RAM, o que inv
 | `57b4584` | 27/08/2026 | Documentação (upload) |
 | `d9768fb` | 31/08/2026 | Documentação (upload) |
 
-**CP2** (a serem registrados à medida que cada etapa for feita, um commit por etapa, **sem sobrescrever o CP1**):
+**CP2, já registrados no repositório** (os commits de upload têm a mensagem automática do GitHub, por isso o conteúdo de cada um está descrito):
 
-| Ordem | Mensagem sugerida do commit | O que entra |
+| Commit | Data | Conteúdo |
 |---|---|---|
-| 1 | `CP2: firmware de teste dos motores e do sensor` | `firmware/01_teste_motores`, `03_teste_sensor` |
-| 2 | `CP2: controle BLE e parada por obstáculo` | `firmware/02_carrinho_ble` |
-| 3 | `CP2: firmware e script de coleta de dados` | `coleta/04_coleta_dados`, `coletar_csv.py` |
-| 4 | `CP2: dataset coletado com o HC-SR04` | `dataset/*.csv`, `resumo_coleta.csv`, `relatorio_coleta.md` |
-| 5 | `CP2: projeto Edge Impulse (impulse, treino e resultados)` | prints em `img/edge-impulse/`, métricas |
-| 6 | `CP2: biblioteca Edge Impulse e inferência no ESP32` | `lib/` ou `.zip` da biblioteca, sketch de inferência |
-| 7 | `CP2: integração do modelo com o carrinho e testes` | sketch final, resultados de teste |
-| 8 | `CP2: README final` | este arquivo preenchido |
+| `1e2a8ca` | 16/10/2026 | README do projeto (primeira versão do CP2) |
+| `50cc539` | 16/10/2026 | Firmware: `carrinho_ble.ino`, `teste_motores.ino`, `teste_sensor.ino` |
+| `c68e531`, `f974a19` | 16/10/2026 | Ajustes e limpeza de comentários do `carrinho_ble.ino` |
+| `1af60dc` | 16/10/2026 | Ajuste do `teste_sensor.ino` |
+| `b249d72` | 16/10/2026 | README: identificação dos integrantes |
+| `4fd194a` | 28/10/2026 | **Dataset:** 15 CSVs coletados, em `dados/` |
+| `68bd159` | 28/10/2026 | **TinyML:** `07_carrinho_tinyml.ino` (carrinho com o modelo) |
+| `e6393b7` | 28/10/2026 | **Evidência do Edge Impulse:** print do bloco de processamento (`img/image.png`) |
 
-Exemplo de como registrar cada etapa (sempre `add` + `commit` + `push`, nunca `push --force`):
+**CP2, etapas ainda por registrar** (um commit por etapa, **sem sobrescrever o CP1**):
 
-```bash
-git add firmware/
-git commit -m "CP2: firmware de teste dos motores e do sensor"
-git push
-```
+| Mensagem sugerida | O que entra |
+|---|---|
+| `CP2: firmware e script de coleta de dados` | `04_coleta_dados.ino` e `coletar_csv.py` |
+| `CP2: diagnóstico dos motores` | `05_diagnostico_motores.ino` |
+| `CP2: biblioteca Edge Impulse (Arduino library)` | `edge-impulse/ei-vinicius_bernardino-project-1-arduino-1.0.2-impulse-1.zip` |
+| `CP2: teste de inferência no ESP32` | `06_inferencia_ei.ino` |
+| `CP2: evidências do Edge Impulse e do ESP32` | prints do Studio e do Monitor Serial em `img/` |
+| `CP2: README final com métricas` | este arquivo, com os `[PREENCHER]` resolvidos |
+
+Cada etapa é registrada com `git add`, `git commit` e `git push`, nunca com `push --force`.
 
 ---
 
@@ -89,13 +94,13 @@ Funcionalidades:
 Fluxo de dados completo:
 
 ```text
-HC-SR04 ──► ESP32 ──► (modo coleta) ──► USB ──► coletar_csv.py ──► CSVs ──► Edge Impulse
-                                                                              │
-                                                                  treino + biblioteca (.zip)
-                                                                              │
-HC-SR04 ──► ESP32 ──► janela de leituras ──► modelo TinyML ──► classe ──► decisão ──► L298N ──► motores
+HC-SR04 ──► ESP32 ──► (04_coleta_dados) ──► USB ──► coletar_csv.py ──► CSVs ──► Edge Impulse
+                                                                                   │
+                                                                    treino + biblioteca Arduino (.zip)
+                                                                                   │
+HC-SR04 ──► ESP32 ──► janela de 10 leituras ──► modelo TinyML ──► classe ──► decisão ──► L298N ──► motores
                 ▲
-   iPhone (BLE) ┘  (controle manual tem prioridade sobre o modo automático)
+   iPhone (BLE) ┘
 ```
 
 Diagrama de blocos original do CP1 (Arduino Uno, antes da troca para ESP32):
@@ -133,7 +138,7 @@ Dimensões usadas no planejamento do CP1:
 | ENB | GPIO 33 | L298N ENB | PWM, velocidade do motor direito (capinha removida) |
 | TRIG | GPIO 18 | HC-SR04 TRIG | Disparo da medição |
 | ECHO | GPIO 19 | HC-SR04 ECHO | Retorno do eco |
-| LED | GPIO 2 | LED da placa | Indicador de estado |
+| LED | GPIO 2 | LED azul da placa | Indicador de estado (não há LEDs externos) |
 
 ### Alimentação
 
@@ -150,59 +155,61 @@ Dimensões usadas no planejamento do CP1:
 Cuidados:
 
 - Os pinos do ESP32 trabalham em 3,3 V e **não toleram 5 V**. Por isso o HC-SR04 foi alimentado com 3,3 V (o ECHO pode ir direto ao GPIO). A alternativa é alimentar com 5 V e usar divisor de tensão (1 kΩ e 2 kΩ) no ECHO.
-- Nunca ligar o cabo USB e a alimentação pelo pino VIN ao mesmo tempo.
+- Nunca ligar o cabo USB e a alimentação pelo pino VIN ao mesmo tempo. Nos testes com USB, o fio 5V → VIN fica desconectado.
 - O jumper do 5V-EN do L298N foi mantido (o regulador do L298N gera os 5 V para o ESP32).
 
 ---
 
 ## 4. Estrutura do repositório
 
-Estrutura-alvo do CP2. Os itens marcados com *(CP1)* já existem; o restante é acrescentado nos commits do CP2.
+Estrutura atual do repositório. Os itens marcados com **(a adicionar)** existem no projeto, mas ainda não foram enviados ao GitHub.
 
 ```text
 RoboMaker/
 ├── README.md
-├── Docum/                                   (CP1)
+├── carrinho_ble.ino                  controle BLE + parada por obstáculo
+├── teste_motores.ino                 teste dos motores
+├── teste_sensor.ino                  teste do HC-SR04
+├── 07_carrinho_tinyml.ino            carrinho com o modelo TinyML no modo automático
+├── 04_coleta_dados.ino               (a adicionar) firmware de coleta de dados
+├── coletar_csv.py                    (a adicionar) programa de captura dos CSVs
+├── 05_diagnostico_motores.ino        (a adicionar) diagnóstico dos motores
+├── 06_inferencia_ei.ino              (a adicionar) teste da inferência, sem motores
+├── dados/                            15 CSVs coletados, um por captura
+│   ├── afastando.001.csv ... afastando.003.csv
+│   ├── aproximando.001.csv ... aproximando.003.csv
+│   ├── livre.001.csv ... livre.006.csv
+│   └── parado_perto.001.csv ... parado_perto.003.csv
+├── edge-impulse/                     (a adicionar) biblioteca Arduino exportada (.zip)
+├── Docum/                            planejamento do CP1
 │   ├── # Backlog Robô Maker.md
 │   ├── # Kanban Robô Maker.md
 │   ├── MoSCoW.pdf
 │   └── MVP Projeto Robô Maker.pdf
-├── img/                                     (CP1: DiagramaBlocos, Medidas, Referencia)
-│   └── edge-impulse/                        prints reais do Studio (CP2)
-├── firmware/
-│   ├── 01_teste_motores/01_teste_motores.ino
-│   ├── 02_carrinho_ble/02_carrinho_ble.ino
-│   ├── 03_teste_sensor/03_teste_sensor.ino
-│   └── 05_diagnostico_motores/05_diagnostico_motores.ino
-├── coleta/
-│   ├── 04_coleta_dados/04_coleta_dados.ino
-│   └── coletar_csv.py
-├── dataset/
-│   ├── <classe>.<NNN>.csv                   um arquivo por captura
-│   ├── resumo_coleta.csv
-│   └── relatorio_coleta.md
-├── edge-impulse/
-│   └── ei-robomaker-arduino-x.y.z.zip       biblioteca exportada do Studio
-└── inferencia/
-    └── 06_inferencia_ei/06_inferencia_ei.ino
+└── img/
+    ├── DiagramaBlocos.png            (CP1)
+    ├── Medidas.png                   (CP1)
+    ├── Referencia.png                (CP1)
+    └── image.png                     print do Edge Impulse: bloco Flatten (CP2)
 ```
 
-> No Arduino IDE, cada `.ino` precisa estar numa pasta com o mesmo nome do arquivo.
+> No Arduino IDE, cada `.ino` precisa estar numa pasta com o mesmo nome do arquivo. Ao baixar o projeto, crie uma pasta por sketch (por exemplo, `carrinho_ble/carrinho_ble.ino`).
 
 ---
 
 ## 5. Firmware do ESP32
 
-| Arquivo | Para que serve | Estado |
+| Arquivo | Para que serve | No repositório |
 |---|---|---|
-| `01_teste_motores.ino` | Sequência de 8 passos (frente, ré, curvas, giros) com 2 s cada, para validar motores e fiação. Usa PWM nos pinos ENA/ENB. | Escrito |
-| `02_carrinho_ble.ino` | Programa principal. Servidor BLE (Nordic UART) que entende o protocolo do Control Pad do Bluefruit Connect, controla os motores com rampa de velocidade e bloqueia o avanço diante de obstáculo. Tem modo automático básico. | Escrito |
-| `03_teste_sensor.ino` | Lê o HC-SR04 e imprime a distância no Monitor Serial, para testar o sensor isolado. | Escrito |
-| `04_coleta_dados.ino` | Lê o HC-SR04 a 10 Hz e imprime `timestamp,distancia_cm` pela USB. Mantém os motores parados. | Escrito e testado em simulação |
-| `05_diagnostico_motores.ino` | Teste liga/desliga sem PWM, para separar problema de fiação de problema de código. | Escrito |
-| `06_inferencia_ei.ino` | Inferência com a biblioteca do Edge Impulse e uso da classe no carrinho. | **A fazer** (ver [seção 8](#8-integração-do-modelo-com-o-esp32)) |
+| `teste_motores.ino` | Sequência de 8 passos (frente, ré, curvas, giros) com 2 s cada, para validar motores e fiação. Usa PWM nos pinos ENA/ENB. | Sim |
+| `carrinho_ble.ino` | Servidor BLE (Nordic UART) que entende o protocolo do Control Pad do Bluefruit Connect, controla os motores com rampa de velocidade e bloqueia o avanço diante de obstáculo. Tem modo automático por regra simples (sensor desligado por padrão). | Sim |
+| `teste_sensor.ino` | Lê o HC-SR04 e imprime a distância no Monitor Serial. | Sim |
+| `04_coleta_dados.ino` | Lê o HC-SR04 a 10 Hz e imprime `timestamp,distancia_cm` pela USB. Mantém os motores parados. Foi usado na coleta. | A adicionar |
+| `05_diagnostico_motores.ino` | Teste liga/desliga sem PWM, para separar problema de fiação de problema de código. | A adicionar |
+| `06_inferencia_ei.ino` | Lê o sensor a 10 Hz, monta a janela de 10 leituras, roda o modelo e imprime classe e confiança. Não mexe nos motores. | A adicionar |
+| `07_carrinho_tinyml.ino` | O `carrinho_ble.ino` com o modelo decidindo no modo automático (botão 4 do app). Sensor ligado. | Sim |
 
-Detalhes do `02_carrinho_ble.ino`:
+Detalhes do `carrinho_ble.ino` (os mesmos valores valem para o `07_carrinho_tinyml.ino`):
 
 | Parâmetro | Valor |
 |---|---|
@@ -223,7 +230,7 @@ O código funciona com as versões 2.x e 3.x do núcleo *esp32 by Espressif*, qu
 
 ### 6.1 Sensor utilizado
 
-**HC-SR04**, sensor ultrassônico de distância.
+**HC-SR04**, sensor ultrassônico de distância, o mesmo do projeto do carrinho.
 
 | Característica | Valor |
 |---|---|
@@ -233,7 +240,7 @@ O código funciona com as versões 2.x e 3.x do núcleo *esp32 by Espressif*, qu
 | Ligação | TRIG → GPIO 18, ECHO → GPIO 19, VCC → 3V3, GND → GND |
 | Espera máxima pelo eco | 25 ms (cerca de 4 m) |
 
-O sensor foi emprestado e usado por tempo limitado. Por isso a coleta foi planejada para ser rápida e gravar tudo automaticamente.
+O sensor foi emprestado e ficou disponível por tempo limitado, por isso a coleta foi feita de forma automatizada.
 
 ### 6.2 Dados coletados
 
@@ -241,178 +248,152 @@ Uma série temporal de **distância em centímetros** em função do tempo.
 
 | Coluna | Tipo | Descrição |
 |---|---|---|
-| `timestamp` | inteiro (ms) | Tempo desde o início da captura, com intervalo constante |
+| `timestamp` | inteiro (ms) | Tempo desde o início da captura |
 | `distancia_cm` | decimal | Distância medida pelo HC-SR04 |
 
-- Frequência de amostragem: **10 Hz** (uma leitura a cada 100 ms).
-- Quando nenhum eco volta (nada à frente, ou superfície que não reflete o som), o valor gravado é **400 cm**, o alcance máximo do sensor. Isso evita buracos nos dados.
+- Frequência de amostragem: **10 Hz**. Em todos os 15 arquivos o intervalo entre leituras é de exatamente 100 ms.
+- Quando nenhum eco volta, o programa grava 400 cm (o alcance máximo do sensor). Nenhuma das capturas coletadas teve esse caso.
 
 ### 6.3 Como a coleta foi realizada
 
-A coleta é feita por dois programas que trabalham juntos:
+Dois programas trabalham juntos:
 
 1. `04_coleta_dados.ino`, gravado no ESP32, envia as leituras pela porta serial a 115200 baud.
-2. `coletar_csv.py`, executado no computador (`pip install pyserial`), faz o resto:
-   - detecta a porta do ESP32 sozinho (ou usa `--porta COMx`);
+2. `coletar_csv.py`, executado no computador (`pip install pyserial`):
+   - detecta a porta do ESP32 (ou usa `--porta COMx`);
    - testa a conexão e avisa se todas as leituras forem 400 cm (sensor desligado ou mal ligado);
    - pergunta a classe, faz uma contagem regressiva de 3 s e captura 10 s;
    - confere o intervalo entre leituras e **descarta** a captura se houver pausa, reinício da placa ou poucas amostras;
-   - grava `dataset/<classe>.<NNN>.csv`, com `timestamp` zerado no início;
-   - aceita `Enter` (repetir a classe), `d` (apagar a última captura) e `q` (sair);
-   - regenera `resumo_coleta.csv` e `relatorio_coleta.md` a partir dos arquivos que existem.
+   - grava `<classe>.<NNN>.csv`, com `timestamp` zerado no início.
 
-Procedimento de captura para cada classe (confirmar e ajustar com o que foi realmente feito):
+As capturas de `livre` e `parado_perto` têm distância praticamente constante; nas de `aproximando` e `afastando` a distância varia de forma contínua ao longo dos 10 s (seção 6.5). O ESP32 ficou ligado ao computador por USB. Descrição da bancada (posição do carrinho, que objeto foi movido e como): `[PREENCHER]`
 
-| Classe | Como foi feita a captura |
-|---|---|
-| `livre` | Carrinho parado, sem nada à frente do sensor |
-| `parado_perto` | Obstáculo fixo a curta distância do sensor |
-| `aproximando` | Obstáculo (ou o carrinho) se aproximando devagar durante os 10 s |
-| `afastando` | Obstáculo se afastando devagar durante os 10 s |
 
-Recomendações para o dataset ficar útil: variar a distância inicial entre capturas, variar o tipo de obstáculo (caixa, mão, parede, livro) e variar a velocidade do movimento.
 
 ### 6.4 Classes definidas
 
-| Classe | Significado | Uso no carrinho |
-|---|---|---|
-| `livre` | Caminho livre à frente | Seguir em frente |
-| `parado_perto` | Obstáculo próximo e estático | Parar e desviar |
-| `aproximando` | Distância diminuindo | Frear / reduzir velocidade |
-| `afastando` | Distância aumentando | Seguir / liberar o avanço |
+| Classe | Significado | Como foi capturada | Uso no carrinho |
+|---|---|---|---|
+| `livre` | Sem obstáculo próximo; o sensor só enxerga o fundo (parede ou objeto distante), com leitura estável | Distância praticamente constante, de cerca de 39 a 118 cm | Seguir em frente |
+| `parado_perto` | Obstáculo próximo e imóvel | Distância praticamente constante, de cerca de 23 a 56 cm | Parar e girar para desviar |
+| `aproximando` | Distância diminuindo | Distância diminuindo, de cerca de 60 a 64 cm até 12 a 27 cm | Seguir mais devagar |
+| `afastando` | Distância aumentando | Distância crescendo, de cerca de 16 a 18 cm até 58 a 66 cm | Seguir em frente |
 
 ### 6.5 Arquivos CSV do projeto
 
-Os arquivos ficam em `dataset/`, no formato aceito pelo Edge Impulse: o rótulo vem do nome do arquivo (`<classe>.<NNN>.csv`) e cada CSV é uma amostra.
-
-Exemplo do formato de um arquivo (**ilustra apenas a estrutura**, não são dados reais):
+Pasta `dados/`, no formato aceito pelo Edge Impulse: o rótulo vem do nome do arquivo (`<classe>.<NNN>.csv`) e cada CSV é uma amostra. Exemplo (primeiras linhas de `afastando.001.csv`):
 
 ```csv
 timestamp,distancia_cm
-0,<distância>
-100,<distância>
-200,<distância>
+0,17.6
+100,17.0
+200,16.6
 ```
 
-Arquivos gerados (**`[PREENCHER]`** com a lista real depois da coleta; o `relatorio_coleta.md` gerado pelo script já traz essa tabela):
+Estatísticas calculadas a partir dos 15 arquivos de `dados/` (distâncias em cm):
 
-| Arquivo | Classe | Amostras (linhas) | Duração |
-|---|---|---|---|
-| `[PREENCHER]` | | | |
+| Arquivo | Leituras | Início → fim | Média | Mín. | Máx. | Desvio padrão |
+|---|---|---|---|---|---|---|
+| `afastando.001.csv` | 100 | 17,6 → 66,0 | 43,4 | 16,3 | 70,6 | 15,8 |
+| `afastando.002.csv` | 100 | 16,0 → 58,1 | 44,0 | 16,0 | 62,8 | 14,6 |
+| `afastando.003.csv` | 100 | 15,7 → 60,8 | 43,9 | 15,7 | 70,2 | 18,2 |
+| `aproximando.001.csv` | 101 | 60,5 → 12,3 | 31,6 | 11,6 | 69,7 | 16,0 |
+| `aproximando.002.csv` | 101 | 64,2 → 27,1 | 47,6 | 27,1 | 64,2 | 9,8 |
+| `aproximando.003.csv` | 101 | 62,2 → 24,4 | 47,8 | 24,4 | 62,8 | 10,5 |
+| `livre.001.csv` | 101 | 118,2 → 118,2 | 118,4 | 118,2 | 118,7 | 0,2 |
+| `livre.002.csv` | 101 | 68,9 → 68,9 | 68,9 | 68,8 | 69,3 | 0,1 |
+| `livre.003.csv` | 101 | 39,1 → 38,6 | 39,5 | 37,7 | 44,6 | 1,0 |
+| `livre.004.csv` | 100 | 50,3 → 68,8 | 49,1 | 46,6 | 68,8 | 2,3 |
+| `livre.005.csv` | 101 | 68,9 → 68,9 | 68,9 | 68,8 | 68,9 | 0,0 |
+| `livre.006.csv` | 101 | 69,9 → 69,4 | 69,5 | 69,4 | 69,9 | 0,2 |
+| `parado_perto.001.csv` | 101 | 23,0 → 24,2 | 23,5 | 21,5 | 26,2 | 0,9 |
+| `parado_perto.002.csv` | 101 | 40,7 → 38,6 | 39,4 | 36,6 | 70,2 | 5,5 |
+| `parado_perto.003.csv` | 101 | 55,9 → 55,4 | 56,3 | 55,4 | 59,7 | 0,9 |
 
 ### 6.6 Quantidade de amostras
 
-Preencher com os valores gerados pelo script em `relatorio_coleta.md` e `resumo_coleta.csv`:
-
-| Classe | Nº de capturas (arquivos) | Nº de medições | Duração total |
+| Classe | Capturas (arquivos) | Medições | Duração total |
 |---|---|---|---|
-| livre | `[PREENCHER]` | `[PREENCHER]` | `[PREENCHER]` |
-| parado_perto | `[PREENCHER]` | `[PREENCHER]` | `[PREENCHER]` |
-| aproximando | `[PREENCHER]` | `[PREENCHER]` | `[PREENCHER]` |
-| afastando | `[PREENCHER]` | `[PREENCHER]` | `[PREENCHER]` |
-| **Total** | `[PREENCHER]` | `[PREENCHER]` | `[PREENCHER]` |
+| afastando | 3 | 300 | 30 s |
+| aproximando | 3 | 303 | 30,3 s |
+| livre | 6 | 605 | 60,5 s |
+| parado_perto | 3 | 303 | 30,3 s |
+| **Total** | **15** | **1511** | **151,1 s** |
 
-Meta de planejamento: cerca de 10 capturas de 10 s por classe (100 medições por captura). O número real é o que está na tabela acima.
+Cada captura tem cerca de 10 s a 10 Hz (100 ou 101 leituras, dependendo de a última leitura cair no instante 9900 ms ou 10000 ms).
 
-Data e local da coleta: `[PREENCHER]`.
+### 6.7 Qualidade dos dados e limitações
 
-Evidência da coleta (foto do carrinho com o sensor, tela do `coletar_csv.py` gravando): `[PREENCHER: img/coleta_01.png]`.
+Observações feitas ao analisar os arquivos:
+
+- **Dataset pequeno e desbalanceado.** São 15 capturas, com 3 em cada classe de movimento e 6 em `livre`.
+- **Leituras isoladas de cerca de 70 cm.** Há picos de um ou dois pontos, sem continuidade, em `afastando.001` (3 ocorrências), `afastando.003`, `aproximando.001` e `parado_perto.002`. Esse valor coincide com a distância da parede nas capturas `livre.002`, `livre.005` e `livre.006` (cerca de 69 cm), o que sugere reflexo em um objeto ao fundo.
+- **`livre` e `parado_perto` se sobrepõem em distância.** As duas classes são séries quase constantes, e há capturas parecidas entre si: `livre.003` (média de 39,5 cm) e `parado_perto.002` (média de 39,4 cm). Com a janela de 1 s e um único sensor, o modelo só tem a média e a variação da distância para distinguir as duas, então a confusão entre elas é o ponto de atenção ao ler a matriz de confusão (seção 7.6).
+- **Três capturas de `livre` com distância praticamente igual** (`livre.002`, `livre.005` e `livre.006`, entre 68,9 e 69,5 cm).
+- **Sem leituras de 400 cm.** O caso "sem eco" (carrinho de frente para um espaço aberto) não aparece nos dados.
+- **Mais variedade melhoraria o modelo:** outros objetos, outras distâncias iniciais e outras velocidades de aproximação.
 
 ---
 
 ## 7. Projeto no Edge Impulse
 
-Projeto no Studio: `[PREENCHER: nome e link do projeto]`.
+Projeto no Studio: **Vinicius_Bernardino-project-1** (ID 1151937), `https://studio.edgeimpulse.com/studio/1151937`.
 
-Cada item abaixo diz **o que fazer** e deixa o **registro real** para o grupo preencher, com o print correspondente em `img/edge-impulse/`.
 
-### 7.1 Preparação e importação dos dados
-
-1. Criar o projeto no Edge Impulse Studio.
-2. *Data acquisition → Upload data*, selecionar todos os CSVs de `dataset/`.
-3. Em *Label*, escolher **Infer from filename** (o rótulo sai do nome do arquivo).
-4. Em *Upload into category*, escolher **Automatically split between training and testing**.
-5. Se o Studio pedir, usar o *CSV Wizard* e indicar `timestamp` como coluna de tempo, `distancia_cm` como eixo e a frequência de 10 Hz.
-
-Registro: `[PREENCHER: número de amostras importadas e print]` → `img/edge-impulse/01_dados.png`
-
-### 7.2 Divisão dos dados
-
-| Conjunto | Amostras | Proporção |
-|---|---|---|
-| Treinamento | `[PREENCHER]` | `[PREENCHER]` (o Studio sugere cerca de 80%) |
-| Teste | `[PREENCHER]` | `[PREENCHER]` (cerca de 20%) |
-
-Print: `img/edge-impulse/02_divisao.png`
+Print: `img/02_divisao.png`
 
 ### 7.3 Configuração do Impulse
 
-| Bloco | Configuração | Valor usado |
-|---|---|---|
-| Time series data | Tamanho da janela | `[PREENCHER]` ms (sugestão inicial: 2000 ms, ou seja, 20 leituras) |
-| | Deslocamento da janela | `[PREENCHER]` ms (sugestão: 500 ms) |
-| | Frequência | 10 Hz |
-| Processing block | Tipo | `[PREENCHER]` |
-| Learning block | Tipo | `[PREENCHER]` |
-| Saída | Classes | livre, parado_perto, aproximando, afastando |
+Valores confirmados nos arquivos da biblioteca exportada:
 
-Print: `img/edge-impulse/03_impulse.png`
+| Bloco | Configuração | Valor |
+|---|---|---|
+| Time series data | Janela | 1000 ms (10 leituras) |
+| | Frequência | 10 Hz (intervalo de 100 ms) |
+| | Eixo | `distancia_cm` (1 eixo) |
+| | Deslocamento da janela (stride) | `[PREENCHER]` |
+| Processing block | Tipo | Flatten |
+| Learning block | Tipo | Classificação (rede neural) |
+| Saída | Classes | afastando, aproximando, livre, parado_perto |
+
+Print: `img/03_impulse.png`
 
 ### 7.4 Processamento
 
-Com um único eixo (distância) e janelas curtas, o bloco *Spectral Analysis* (ou *Flatten*, que extrai média, mínimo, máximo e inclinação) tende a funcionar bem, porque as classes diferem pela **tendência** da distância (subindo, descendo ou constante) e pelo seu valor médio.
+O bloco **Flatten** resume cada janela de 10 leituras em 7 características estatísticas: média, mínimo, máximo, raiz do valor quadrático médio (RMS), desvio padrão, assimetria (*skewness*) e curtose (*kurtosis*). A rede neural recebe esses 7 valores por janela. Como as classes diferem pela **tendência** da distância (subindo, descendo ou constante) e pelo seu valor médio, essas estatísticas capturam o que importa.
 
-Bloco escolhido e justificativa: `[PREENCHER]`
+Parâmetros usados (print do Studio, com a amostra `parado_perto.003`):
 
-Registro: parâmetros da extração de características, *Feature explorer* mostrando a separação das classes. Print: `img/edge-impulse/04_features.png`
+| Parâmetro | Valor |
+|---|---|
+| Scale axes | 1 |
+| Method | Average, Minimum, Maximum, Root-mean square, Standard deviation, Skewness, Kurtosis (todos marcados) |
+| Moving average | 0 |
+| Tempo de processamento (DSP) | 1 ms |
+| Pico de RAM (DSP) | 84 bytes |
 
-### 7.5 Modelo escolhido e treinamento
+Exemplo do print: as 10 leituras brutas da primeira janela (`55.9, 55.4, 55.4, 55.8, 55.8, 55.8, 56.3, 56.3, 56.3, 56.3`) viram as 7 características `55.93, 55.40, 56.30, 55.93, 0.34, -0.26, -1.27`.
+
+
+### 7.5 Modelo e treinamento
 
 | Item | Valor |
 |---|---|
-| Tipo de modelo | `[PREENCHER]` (ex.: rede neural densa com *Classification*) |
-| Ciclos (epochs) | `[PREENCHER]` |
-| Taxa de aprendizado | `[PREENCHER]` |
-| Quantização | `[PREENCHER]` (int8 ou float32) |
-| Justificativa | `[PREENCHER]` |
+| Tipo de modelo | Rede neural de classificação |
+| Quantização | int8 (entrada e saída do modelo) |
+| Número de classes | 4 |
 
-Print: `img/edge-impulse/05_treino.png`
+Print: `img/05_treino.png`
 
-### 7.6 Resultados e métricas
 
-Copiar do Studio, depois do treino (*Validation set*) e de *Model testing* (*Test set*):
+Matriz de confusão (colar a do Studio):
 
-| Métrica | Treino/validação | Teste |
-|---|---|---|
-| Acurácia | `[PREENCHER]` | `[PREENCHER]` |
-| Perda (loss) | `[PREENCHER]` | n/d |
-| F1 por classe | `[PREENCHER]` | `[PREENCHER]` |
 
-Matriz de confusão (colar a do Studio, não inventar):
 
-| Real \ Previsto | livre | parado_perto | aproximando | afastando |
-|---|---|---|---|---|
-| livre | `[PREENCHER]` | | | |
-| parado_perto | | `[PREENCHER]` | | |
-| aproximando | | | `[PREENCHER]` | |
-| afastando | | | | `[PREENCHER]` |
+Prints: `img/06_matriz.png`, `img/07_teste.png`
 
-Uso de memória e tempo estimados pelo Studio para o ESP32: RAM `[PREENCHER]`, Flash `[PREENCHER]`, latência `[PREENCHER]`.
 
-Análise: quais classes foram confundidas e por quê, o que foi feito para melhorar (mais dados, outra janela, outro bloco): `[PREENCHER]`
-
-Prints: `img/edge-impulse/06_matriz.png`, `img/edge-impulse/07_teste.png`
-
-### 7.7 Testes de inferência
-
-- **No Studio** (*Live classification* e *Model testing*): `[PREENCHER: resultados e print]` → `img/edge-impulse/08_live.png`
-- **No ESP32** (Monitor Serial mostrando a classe e a confiança de cada janela): `[PREENCHER: tabela de situações testadas]`
-
-| Situação testada | Classe esperada | Classe obtida | Confiança |
-|---|---|---|---|
-| `[PREENCHER]` | | | |
-
-Print: `img/edge-impulse/09_serial.png`
+Print: `img/09_serial.png`
 
 ---
 
@@ -420,36 +401,38 @@ Print: `img/edge-impulse/09_serial.png`
 
 ### 8.1 Biblioteca gerada pelo Edge Impulse
 
-1. No Studio, *Deployment → Arduino library*, otimização *Quantized (int8)* ou *Unoptimized (float32)*, *Build*.
-2. Salvar o `.zip` em `edge-impulse/` (commit próprio no repositório).
+1. No Studio: *Deployment → Arduino library*, otimização *Quantized (int8)*, *Build*.
+2. Arquivo gerado: `ei-vinicius_bernardino-project-1-arduino-1.0.2-impulse-1.zip`, a guardar em `edge-impulse/` (ainda não está no repositório).
 3. No Arduino IDE: *Sketch → Include Library → Add .ZIP Library…*
+4. Cabeçalho a incluir: `#include <Vinicius_Bernardino-project-1_inferencing.h>`.
+
+Se o IDE avisar de bibliotecas faltando (`Arduino_LSM9DS1`, `PDM`, `Arduino_OV767X`), elas são só dos exemplos para outras placas e podem ser ignoradas. Se faltar memória ao gravar, escolher *Ferramentas → Partition Scheme → Huge APP (3MB No OTA)*.
 
 ### 8.2 Inferência no microcontrolador
 
-O sketch de inferência (`06_inferencia_ei.ino`) segue o padrão da biblioteca do Edge Impulse:
+Em `06_inferencia_ei.ino` e em `07_carrinho_tinyml.ino` (já no repositório), o fluxo é o padrão da biblioteca:
 
-1. A cada 100 ms, lê o HC-SR04 e guarda o valor num buffer circular com o tamanho da janela do impulse (`EI_CLASSIFIER_RAW_SAMPLE_COUNT`).
-2. Quando o buffer está cheio, monta um `signal_t` com `numpy::signal_from_buffer(...)`.
-3. Chama `run_classifier(&signal, &resultado, false)`.
-4. Escolhe a classe de maior confiança em `resultado.classification[i].value`.
-5. Só aceita a classe se a confiança passar de um limite (ex.: 0,7). Caso contrário, mantém a decisão anterior.
-
-O nome do arquivo de cabeçalho (`#include <NOME_DO_PROJETO_inferencing.h>`) depende do nome do projeto no Studio: `[PREENCHER]`.
+1. A cada 100 ms (10 Hz, como no treino), lê o HC-SR04. Sem eco ou acima de 400 cm, o valor vira 400, como na coleta.
+2. Guarda a leitura num buffer com as últimas `EI_CLASSIFIER_RAW_SAMPLE_COUNT` (10) leituras.
+3. Com o buffer cheio, monta um `signal_t` e chama `run_classifier(&sinal, &resultado, false)`.
+4. Escolhe a classe de maior valor em `resultado.classification[i].value`.
+5. Só aceita a classe se a confiança for de pelo menos 0,60; caso contrário, mantém a anterior.
 
 ### 8.3 Uso da saída do modelo no programa do carrinho
 
-A classe prevista é convertida numa ação do carrinho, aproveitando as funções de movimento e a parada por obstáculo que já existem em `02_carrinho_ble.ino`:
+No `07_carrinho_tinyml.ino`, o modo automático (botão 4 do app) usa a classe prevista:
 
-| Classe prevista | Ação do carrinho |
+| Condição | Ação do carrinho |
 |---|---|
-| `livre` | Avançar (velocidade do modo automático) |
-| `aproximando` | Reduzir a velocidade |
-| `parado_perto` | Parar e girar para procurar caminho livre |
-| `afastando` | Avançar |
+| Obstáculo a menos de 20 cm (regra de segurança, sem IA) | Gira para a direita |
+| Classe `parado_perto` | Gira para a direita |
+| Classe `aproximando` | Avança mais devagar (velocidade 120) |
+| Classe `livre` ou `afastando` | Avança (velocidade 150) |
+| Confiança abaixo de 0,60 | Mantém a decisão anterior |
 
-Regras de segurança (a manter): o limite de 20 cm do sensor continua bloqueando o avanço **independentemente do modelo**, e o comando manual pelo iPhone deve ter prioridade sobre o modo automático.
+A regra dos 20 cm do sensor tem prioridade sobre o modelo. Tocar numa seta do app cancela o modo automático.
 
-Estado: `[PREENCHER: integrado e testado / parcialmente integrado / não concluído]`
+Estado da integração: o programa foi escrito e o classificador executa no ESP32. O comportamento do carrinho andando no chão com o modelo: `[PREENCHER: testado / não testado]` (depende dos motores, ver seção 10).
 
 ---
 
@@ -464,24 +447,26 @@ Estado: `[PREENCHER: integrado e testado / parcialmente integrado / não conclu�
 
 ### 9.2 Testar a montagem
 
-1. Gravar `03_teste_sensor.ino` e conferir as distâncias no Monitor Serial (115200).
-2. Gravar `01_teste_motores.ino` com o carrinho levantado (rodas sem tocar a mesa). Se os motores só chiarem, usar `05_diagnostico_motores.ino` (ver [seção 10](#10-estado-atual-e-problemas-conhecidos)).
+1. Gravar `teste_sensor.ino` e conferir as distâncias no Monitor Serial (115200).
+2. Gravar `teste_motores.ino` com o carrinho levantado (rodas sem tocar a mesa). Se os motores só chiarem, usar `05_diagnostico_motores.ino` (seção 10).
 
 ### 9.3 Controlar pelo iPhone
 
-1. Gravar `02_carrinho_ble.ino`.
+1. Gravar `carrinho_ble.ino`.
 2. No Bluefruit Connect, conectar em `Carrinho-01`, abrir *Controller → Control Pad*.
-3. Setas movem o carrinho; botões 2 e 3 ajustam a velocidade.
+3. Setas movem o carrinho; botão 1 para; botões 2 e 3 ajustam a velocidade; botão 4 liga o modo automático (com o sensor ligado).
 
 ### 9.4 Coletar dados
 
-1. Gravar `04_coleta_dados.ino`, **fechar o Monitor Serial**.
-2. `python coletar_csv.py` (na pasta onde `dataset/` deve ser criada).
+1. Gravar `04_coleta_dados.ino` e **fechar o Monitor Serial**.
+2. `python coletar_csv.py` (os arquivos saem em `dados/`).
 3. Seguir as perguntas do programa, classe por classe.
 
-### 9.5 Treinar no Edge Impulse e rodar no ESP32
+### 9.5 Treinar e rodar o modelo
 
-Seguir as seções 7 e 8.
+1. Treinar no Edge Impulse (seção 7) e baixar a Arduino library.
+2. Gravar `06_inferencia_ei.ino` para ver a classe no Monitor Serial.
+3. Gravar `07_carrinho_tinyml.ino`, conectar pelo app e apertar o botão 4.
 
 ---
 
@@ -492,20 +477,11 @@ Seguir as seções 7 e 8.
 | Chassi, ligações e alimentação montados (sem protoboard) | Concluído |
 | Firmware de teste dos motores, do sensor e controle BLE | Escrito |
 | Conexão e gravação no ESP32 pela USB | Funcionando (driver CP210x instalado) |
-| Programa de coleta e script do computador | Escritos e testados em simulação |
-| **Movimento dos motores** | **Com problema: os motores apenas chiam e não giram** |
-| Coleta real de dados com o HC-SR04 | `[PREENCHER]` |
-| Treinamento no Edge Impulse | `[PREENCHER]` |
-| Inferência no ESP32 e integração | `[PREENCHER]` |
+| Coleta de dados com o HC-SR04 | Concluída (15 capturas, 1511 medições, em `dados/`) |
+| Impulse (Flatten + rede neural) e biblioteca Arduino exportada | Concluídos; métricas na seção 7 por preencher |
+| Modelo executando no ESP32 | Sim (log do SDK no Monitor Serial) |
 
-**Problema dos motores.** Ao rodar o teste de motores, ouve-se um chiado e as rodas não giram, embora os motores funcionem ligados direto nas baterias. Com as capinhas (jumpers) recolocadas em ENA/ENB, o chiado some, mas o motor continua parado. Isso indica que o L298N não está recebendo sentido de giro nos pinos IN, ou que há problema de energia ou de contato. Investigação planejada:
-
-1. Ligar IN1 no 5V e IN2 no GND do L298N, direto, sem o ESP32 (com as capinhas em ENA/ENB).
-2. Medir a tensão entre 12V e GND do L298N (esperado: 7 V ou mais) e entre OUT1 e OUT2.
-3. Conferir os parafusos dos bornes e o suporte de baterias.
-4. Rodar `05_diagnostico_motores.ino`.
-
-Resultado da investigação: `[PREENCHER]`
+Como o problema dos motores não afeta a coleta de dados, o treinamento nem a inferência, essas etapas foram concluídas normalmente.
 
 ---
 
@@ -519,27 +495,3 @@ Documentos do planejamento, em `Docum/`:
 | [`# Kanban Robô Maker.md`](Docum/%23%20Kanban%20Rob%C3%B4%20Maker.md) | Quadro com o andamento (Backlog, A fazer, Em andamento, Em teste, Em correção, Concluído) |
 | [`MoSCoW.pdf`](Docum/MoSCoW.pdf) | Funcionalidades essenciais e não essenciais |
 | [`MVP Projeto Robô Maker.pdf`](Docum/MVP%20Projeto%20Rob%C3%B4%20Maker.pdf) | Definição do MVP: 4 direções, controle por Bluetooth, detecção e parada diante de obstáculos |
-
-Divisão de trabalho:
-
-| Integrante | Foco |
-|---|---|
-| Gabriel Pacheco | Montagem do chassi, fixação dos componentes, circuito de alimentação |
-| Vinícius Bernardino | Programação dos movimentos, sensor, controle Bluetooth, fail-safe |
-| Ambos | Ligação dos motores, sensor e Bluetooth, testes integrados, documentação |
-
-Imagens usadas como referência de montagem no CP1:
-
-![Imagens de referência](img/Referencia.png)
-
-Nota: as tarefas do Backlog que citam Arduino Uno e HC-05/HC-06 foram adaptadas no CP2 para ESP32 com BLE (ver [seção 1](#1-evolução-cp1--cp2)). O critério de aceite de cada tarefa permanece o mesmo.
-
----
-
-## 12. Referências
-
-- [Documentação do Edge Impulse: formato de CSV e upload de dados](https://docs.edgeimpulse.com/docs/edge-impulse-studio/data-acquisition)
-- [Edge Impulse: implantação como biblioteca Arduino](https://docs.edgeimpulse.com/docs/run-inference/arduino-library)
-- [Núcleo Arduino para ESP32 (Espressif)](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
-- [Adafruit Bluefruit LE Connect (app)](https://learn.adafruit.com/bluefruit-le-connect)
-- Datasheet do sensor HC-SR04 e do driver L298N
