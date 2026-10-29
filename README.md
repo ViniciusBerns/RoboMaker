@@ -1,10 +1,6 @@
 # RoboMaker — Carrinho robótico com ESP32, controle BLE e TinyML (Edge Impulse)
 
-Projeto da disciplina de robótica. Um carrinho de 2 rodas, controlado pelo iPhone por Bluetooth Low Energy, que para diante de obstáculos usando um sensor ultrassônico. Na segunda etapa (**CP2**) o projeto evolui para **TinyML**: os dados do sensor foram coletados pelo grupo, um modelo foi treinado no **Edge Impulse** e roda dentro do ESP32 para classificar a situação à frente do carrinho.
-
 **Integrantes:** Vinícius Bernardino - RM 97888 · Gabriel Pacheco - RM 550191
-
-> **Convenção deste README.** Os números do dataset (seção 6) foram calculados a partir dos CSVs do projeto. Os resultados do Edge Impulse (acurácia, matriz de confusão, prints) vêm do Studio e estão marcados com **`[PREENCHER]`** até serem copiados de lá. O que não foi verificado está dito como tal, em especial na seção 10.
 
 ---
 
